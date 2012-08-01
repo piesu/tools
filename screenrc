@@ -1,0 +1,27 @@
+hardstatus alwayslastline
+hardstatus string "%{= 9W}%{9w}%H%{= 9W} %{g}[ %?%-Lw%?%{= 9Y}%n*%f %t%?(%u)%?%{= 9c}%?%+Lw%?%?%= %{g}]%{= 9W} %c%{W}"
+# [%{Y}%l%{g}] - top
+#hardstatus string "%{= 9g}[ %{G}%H %{= 9g}][%= %{= 9w}%?%-Lw%?%{= 9R}(%{W}%n*%f %t%?(%u)%?%{= 9R})%{= 9w}%?%+Lw%?%?%= %{g}][%{Y}%l%{g}]%{= C}[ %m/%d/%y %c ]%{W}"
+#hardstatus string "%{= kc}%{kw}%H@$LOGNAME %{g}[ %?%-Lw%?%{= kY}%n*%f %t%?(%u)%?%{= kc}%?%+Lw%?%?%= %{g}] %{= kW}%c%{dd}"
+startup_message off
+defutf8 on
+defscrollback 1024
+escape ^Zz
+nethack on
+
+caption splitonly "%?%F%{=b gK} ACTIVE %:%{= rK} INACTIVE %?"
+#backtick 100 5 5 tail -1 /var/tmp/vermaden.stats.top
+#caption always '%{= wk} %= %100` %='
+
+bind  s split -v
+bind  ! select 11
+bind  @ select 12
+bind \# select 13
+bind  $ select 14
+bind  % select 15
+bind \^ select 16
+bind  & select 17
+bind  * select 18
+bind  ( select 19
+bind  ) select 10
+
