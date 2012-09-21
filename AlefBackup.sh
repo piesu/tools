@@ -11,6 +11,11 @@
 # - generate raports for sending
 
 # Changelog:
+#
+# 0.3.8.3:
+#  - added list of acceptable error codes that will mean backup ended successful
+#    (like error 24 - some files vanished during copying. Pretty normal for mail servers)
+#
 # 0.3.8.2:
 #  - added --checksum - for every file will be run md5sum
 #
@@ -18,7 +23,7 @@
 #  - last link isn't changed if backup wasn't succesful
 #  - backup isn't added to daily etc files if wasn't successful
 
-VERSION='v0.3.8.2'
+VERSION='v0.3.8.3'
 
 usage()
 {
@@ -126,6 +131,7 @@ if [[ $ssh = true ]]
 #  fi
 fi
 
+acceptable_errors="24"
 
 BACKUP_DIR=${dst%/}
 
@@ -195,6 +201,18 @@ fi
 
 rsync $attributes $src $backup
 success=$?
+
+real_success=$success
+
+# some errors are acceptable
+for k in $acceptable_errors; 
+do 
+ if [[ $k -eq $success ]]; 
+ then 
+  success=0; 
+ fi; 
+done;
+
 
 if [[ ! $dry ]] && [[ $success == 0 ]]
 then
