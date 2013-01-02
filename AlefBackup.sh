@@ -1,5 +1,5 @@
 #!/bin/bash
-# AlefBackup 
+# AlefBackup
 # made by Pies
 # script uses rsync
 
@@ -12,6 +12,9 @@
 
 # Changelog:
 #
+# 0.3.8.4:
+#  - added --md5 option - checksum won't be mandatory
+#
 # 0.3.8.3:
 #  - added list of acceptable error codes that will mean backup ended successful
 #    (like error 24 - some files vanished during copying. Pretty normal for mail servers)
@@ -23,25 +26,27 @@
 #  - last link isn't changed if backup wasn't succesful
 #  - backup isn't added to daily etc files if wasn't successful
 
-VERSION='v0.3.8.3'
+VERSION='v0.3.8.4'
 
 usage()
 {
-echo "AlefBackup $VERSION 
+echo "AlefBackup $VERSION
  made by Pies
  script uses rsync
 
 Usage: backup [OPTION] source destination
 
 Options:
- -h, --help       print this help info
- -q, --quiet      don't output anything
- -s, --ssh        let source be accessible by ssh
-                  ssh server must be configured in ~/.ssh/config
-                  access must by possible by keys
- -d, --dry-run    dry run, do nothing, show everything
- -v, --verbose    show everything
- -n, --new        create new dir for backups
+ -h, --help         print this help info
+ -q, --quiet        don't output anything
+ -s, --ssh          let source be accessible by ssh
+                    ssh server must be configured in ~/.ssh/config
+                    access must by possible by keys
+ --checksum, --md5  everyfile will be checked if was modified by md5sum instead
+                     of metadata
+ -d, --dry-run      dry run, do nothing, show everything
+ -v, --verbose      show everything
+ -n, --new          create new dir for backups
 "
 exit
 }
@@ -54,7 +59,7 @@ if [[ ! -e $dst ]] ; then
   mkdir $dst
 fi
 
-if [[ ! -e $dst/last ]] ; then 
+if [[ ! -e $dst/last ]] ; then
   mkdir $dst/empty
   ln -s $dst/empty $dst/last
   touch $dst/empty.log
@@ -164,17 +169,17 @@ else
   yearly_on=false
 fi
 
-if ! $yearly_on && ! $monthly_on && ! $daily_on 
+if ! $yearly_on && ! $monthly_on && ! $daily_on
 then
  show "This isn't time for any backup!"
- return 
+ return
 fi
 
 if [[ ! $dry ]]
 then
   backup=${BACKUP_DIR}/$date
   mkdir $backup
-  show "Created dir $backup" 
+  show "Created dir $backup"
   last=${BACKUP_DIR}/last
 else
   backup=${BACKUP_DIR}
@@ -184,8 +189,11 @@ fi
 show "Backuping..."
 attributes="--archive --human-readable --delete --include-from $rules --link-dest=$last"
 
+if [[ $checksum ]]
+then
 # don't check only time and size, let rsync md5sum every file
-attributes="--checksum $attributes"
+  attributes="--checksum $attributes"
+fi
 
 if [[ $dry ]]
 then
@@ -205,12 +213,12 @@ success=$?
 real_success=$success
 
 # some errors are acceptable
-for k in $acceptable_errors; 
-do 
- if [[ $k -eq $success ]]; 
- then 
-  success=0; 
- fi; 
+for k in $acceptable_errors;
+do
+ if [[ $k -eq $success ]];
+ then
+  success=0;
+ fi;
 done;
 
 
@@ -220,22 +228,22 @@ then
   ln -s $backup $last
   rm $last.log
   ln -s $backup.log $last.log
-  if $daily_on 
+  if $daily_on
   then
     echo $date >> $daily
     show "$date >> $daily"
   fi
-  if $monthly_on 
+  if $monthly_on
   then
     echo $date >> $monthly
     show "$date >> $monthly"
   fi
-  if $yearly_on 
+  if $yearly_on
   then
     echo $date >> $yearly
     show "$date >> $yearly"
   fi
-fi 
+fi
 
 if [[ ! $dry ]] && [[ $success != 0 ]]
 then
@@ -250,7 +258,7 @@ delete_old()
 {
 
 if [[ $daily_num -gt 0 ]]
-then      
+then
   num_of_daily=`wc -l $daily |cut -f1 -d' '`
 
 
@@ -270,7 +278,7 @@ then
     rm $daily
     mv $daily.tmp $daily
     done
- 
+
   fi
 fi
 
@@ -327,13 +335,13 @@ config()
 {
 
 if [[ ! $config ]]
-then 
+then
   config=${dst%/}/config
   source $config
 fi
 
 if [[ ! $failed ]]
-then 
+then
   failed=${dst%/}/failed
 fi
 
@@ -353,24 +361,24 @@ fi
 monthly=${dst%/}/monthly
 
 if [[ ! $monthly_num ]]
-then 
+then
  monthly_num=0
 fi
 
 if [[ ! $monthly_freq ]]
-then 
+then
  monthly_freq=30
 fi
 
 yearly=${dst%/}/yearly
 
 if [[ ! $yearly_num ]]
-then 
+then
  yearly_num=0
 fi
 
 if [[ ! $yearly_freq ]]
-then 
+then
  yearly_freq=365
 fi
 
@@ -379,9 +387,9 @@ fi
 
 # If run without arguments, then show help
 if [[ $# = 0 ]]
-then 
+then
   usage
-fi  
+fi
 
 
 debug()
@@ -411,29 +419,30 @@ while true ; do
     -d|--dry-run) dry=true ; shift ;;
     -v|--verbose) verbose=true ; shift ;;
     -n|--new)     new=true ; shift ;;
-   --) shift ; break ;;
+    --md5|--checksum) checksum=true ; shift ;;
+    --) shift ; break ;;
     *) usage ; exit ;;
   esac
 done
 
 if [[ "$1" ]]
-then 
-  src="$1" 
-  shift 
-else 
-  echo "You have to specify source of backup" 
+then
+  src="$1"
+  shift
+else
+  echo "You have to specify source of backup"
   exit 1
 fi
 
 if [[ "$1" ]]
-then 
+then
   case "$1" in
     /*) dst=$1 ;;
     *) dst=`pwd`/$1 ;;
   esac
-  shift 
-else 
-  echo "You have to specify destination of backup" 
+  shift
+else
+  echo "You have to specify destination of backup"
   exit 1
 fi
 
