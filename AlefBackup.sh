@@ -448,7 +448,7 @@ fi
 
 if [[ "$1" ]]
 then
-  echo "Too much arguments!"
+  echo "Too many arguments!"
   exit 1
 fi
 
