@@ -14,6 +14,7 @@
 #
 # 0.3.8.4:
 #  - added --md5 option - checksum won't be mandatory
+#  - files daily, monthly and yearly will be created (no more "No such file or directory" error on first run)
 #
 # 0.3.8.3:
 #  - added list of acceptable error codes that will mean backup ended successful
@@ -65,6 +66,10 @@ if [[ ! -e $dst/last ]] ; then
   touch $dst/empty.log
   ln -s $dst/empty.log $dst/last.log
 fi
+
+touch $dst/daily
+touch $dst/monthly
+touch $dst/yearly
 
 if [[ ! -e $dst/rules ]]
 then
