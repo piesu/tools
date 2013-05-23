@@ -8,9 +8,12 @@
 # - allow rsync overs ssh tunel
 # - check if backup is running, don't start second
 # - check left space on disk - use readlink, mount, df
-# - generate raports for sending
+# - generate reports for sending 
 
 # Changelog:
+#
+# 0.3.8.5
+#  - last message now depends if backup was successful
 #
 # 0.3.8.4:
 #  - added --md5 option - checksum won't be mandatory
@@ -27,7 +30,7 @@
 #  - last link isn't changed if backup wasn't succesful
 #  - backup isn't added to daily etc files if wasn't successful
 
-VERSION='v0.3.8.4'
+VERSION='v0.3.8.5'
 
 usage()
 {
@@ -141,6 +144,7 @@ if [[ $ssh = true ]]
 #  fi
 fi
 
+# error 24 - files vanished during backup - often seen on mail systems
 acceptable_errors="24"
 
 BACKUP_DIR=${dst%/}
@@ -255,8 +259,13 @@ then
   echo "$date error $success" >> $failed
 fi
 
+if [[ $success = 0 ]]
+then
+  show "Everything done, be happy with your new backup!"
+else 
+  show "Errors experienced, backup not accepted"
+fi
 
-show "Everything done, be happy with your new backup!"
 }
 
 delete_old()
