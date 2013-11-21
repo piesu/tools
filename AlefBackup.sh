@@ -13,6 +13,7 @@
 # - second backup won't be started
 # - check left space on disk - use readlink, mount, df
 # - output is sending friendly, just put output into mail and select title basing on exit code
+# - added dates to output
 #
 # 0.3.8.5
 #  - last message now depends if backup was successful
@@ -441,6 +442,8 @@ while true ; do
   esac
 done
 
+startDate=`date`
+
 if [[ "$1" ]]
 then
   src="$1"
@@ -485,6 +488,9 @@ config
 backup
 delete_old
 
+
 echo "Left free space: `df $dst --output=avail -m |tail -n1`"
+echo "Backup started: $startDate"
+echo "Backup finished: `date`"
 
 rm $dst/running
