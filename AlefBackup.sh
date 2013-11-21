@@ -1,16 +1,18 @@
 #!/bin/bash
 # AlefBackup
-# made by Pies
+# made by Pies (alef@314es.pl)
 # script uses rsync
 
 # TODO:
 # - allow to be over ssh both source and destination
 # - allow rsync overs ssh tunel
-# - check if backup is running, don't start second
-# - check left space on disk - use readlink, mount, df
-# - generate reports for sending 
 
 # Changelog:
+#
+# 0.3.8.6
+# - second backup won't be started
+# - check left space on disk - use readlink, mount, df
+# - output is sending friendly, just put output into mail and select title basing on exit code
 #
 # 0.3.8.5
 #  - last message now depends if backup was successful
@@ -35,7 +37,7 @@ VERSION='v0.3.8.5'
 usage()
 {
 echo "AlefBackup $VERSION
- made by Pies
+ made by Pies (alef@314es.pl)
  script uses rsync
 
 Usage: backup [OPTION] source destination
@@ -466,6 +468,14 @@ then
   exit 1
 fi
 
+if [[ -f $dst/running ]]
+then 
+  echo "Backup already running"
+  exit 1
+fi
+
+touch $dst/running
+
 if [[ $new ]]
 then
   new
@@ -474,3 +484,7 @@ fi
 config
 backup
 delete_old
+
+echo "Left free space: `df $dst --output=avail -m |tail -n1`"
+
+rm $dst/running
