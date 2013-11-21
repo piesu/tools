@@ -493,8 +493,8 @@ config
 backup
 delete_old
 
-echo "Free space before: $oldSpace"
-echo "Free space after:  `freespace`"
+echo "Free space before: ${oldSpace}M"
+echo "Free space after:  `freespace`M"
 echo "Backup started:  $startDate"
 echo "Backup finished: `date`"
 
