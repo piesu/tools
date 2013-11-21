@@ -421,7 +421,10 @@ echo "dst=$dst"
 
 }
 
-
+freespace()
+{
+ df $dst -m |tail -n1|awk '{print $4}'
+}
 
 tmp=`getopt -o hsqdvn --long help,quiet,ssh,dry-run,verbose,new \
      -n 'AlefBackup' -- "$@"`
@@ -484,13 +487,15 @@ then
   new
 fi
 
+oldSpace=`freespace`
+
 config
 backup
 delete_old
 
-
-echo "Left free space: `df $dst --output=avail -m |tail -n1`"
-echo "Backup started: $startDate"
+echo "Free space before: $oldSpace"
+echo "Free space after:  `freespace`"
+echo "Backup started:  $startDate"
 echo "Backup finished: `date`"
 
 rm $dst/running
