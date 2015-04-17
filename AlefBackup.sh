@@ -1,13 +1,20 @@
 #!/bin/bash
 # AlefBackup
-# made by Pies (alef@314es.pl)
+# made by Pies, changed by xmichal (4 lines:)
 # script uses rsync
 
 # TODO:
 # - allow to be over ssh both source and destination
 # - allow rsync overs ssh tunel
+# - check if backup is running, don't start second
+# - check left space on disk - use readlink, mount, df
+# - generate raports for sending
 
 # Changelog:
+#
+# 0.3.8.7:
+#  - xmi: fixed proper relative linking last and last.log
+#  - xmi: added check for already running backup - reboot safe
 #
 # 0.3.8.6
 # - second backup won't be started
@@ -33,7 +40,7 @@
 #  - last link isn't changed if backup wasn't succesful
 #  - backup isn't added to daily etc files if wasn't successful
 
-VERSION='v0.3.8.5'
+VERSION='v0.3.8.7'
 
 usage()
 {
@@ -79,7 +86,7 @@ touch $dst/yearly
 
 if [[ ! -e $dst/rules ]]
 then
-  echo "# Please enter what should be backuped and what shouldn't
+  echo "# Please enter what should be backed up and what shouldn't
 #
 # start line with \"+\" to add directory/files to backup and \"-\" to remove
 " >> "$dst/rules"
@@ -151,6 +158,8 @@ fi
 acceptable_errors="24"
 
 BACKUP_DIR=${dst%/}
+TEMP_DIR=/run/shm
+TEMP_FILE="${TEMP_DIR}/aleftemp-`echo ${BACKUP_DIR} | md5sum | awk '{print $1}'`"
 
 rules=${BACKUP_DIR}/rules
 date=`date +%Y-%m-%d_%H%M`
@@ -181,6 +190,13 @@ else
   yearly_on=false
 fi
 
+if [[ -e "${TEMP_FILE}" ]]; then
+    echo "AlefBackup in ${BACKUP_DIR} already running (or stale lockfile exists ${TEMP_FILE}). Exiting."
+    exit 0
+else
+    touch "${TEMP_FILE}"
+fi
+
 if ! $yearly_on && ! $monthly_on && ! $daily_on
 then
  show "This isn't time for any backup!"
@@ -198,7 +214,7 @@ else
   last=${BACKUP_DIR}/last
 fi
 
-show "Backuping..."
+show "Backing up..."
 attributes="--archive --human-readable --delete --include-from $rules --link-dest=$last"
 
 if [[ $checksum ]]
@@ -236,10 +252,13 @@ done;
 
 if [[ ! $dry ]] && [[ $success == 0 ]]
 then
+  cd ${BACKUP_DIR}
   rm $last
-  ln -s $backup $last
+  ln -s $date $last
   rm $last.log
-  ln -s $backup.log $last.log
+  ln -s $date.log $last.log
+  cd - > /dev/null
+
   if $daily_on
   then
     echo $date >> $daily
@@ -262,10 +281,12 @@ then
   echo "$date error $success" >> $failed
 fi
 
+rm -f "${TEMP_FILE}"
+
 if [[ $success = 0 ]]
 then
   show "Everything done, be happy with your new backup!"
-else 
+else
   show "Errors experienced, backup not accepted"
 fi
 
@@ -474,14 +495,6 @@ then
   exit 1
 fi
 
-if [[ -f $dst/running ]]
-then 
-  echo "Backup already running"
-  exit 1
-fi
-
-touch $dst/running
-
 if [[ $new ]]
 then
   new
@@ -498,4 +511,3 @@ echo "Free space after:  `freespace`M"
 echo "Backup started:  $startDate"
 echo "Backup finished: `date`"
 
-rm $dst/running
